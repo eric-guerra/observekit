@@ -1,0 +1,28 @@
+[
+  {
+    "name": "checkout_availability",
+    "service": "checkout",
+    "route": "/checkout",
+    "type": "availability",
+    "objective": 0.999,
+    "description": "checkout succeeds (non-5xx)"
+  },
+  {
+    "name": "checkout_latency",
+    "service": "checkout",
+    "route": "/checkout",
+    "type": "latency",
+    "objective": 0.99,
+    "thresholdSeconds": 1,
+    "description": "99% of checkouts under 1s"
+  },
+  {
+    "name": "inventory_latency",
+    "service": "inventory",
+    "route": "/stock/:sku",
+    "type": "latency",
+    "objective": 0.995,
+    "thresholdSeconds": 0.3,
+    "description": "99.5% of stock lookups under 300ms"
+  }
+]
