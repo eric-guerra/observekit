@@ -1,0 +1,23 @@
+receivers:
+  otlp:
+    protocols:
+      http: { endpoint: 0.0.0.0:4318 }
+      grpc: { endpoint: 0.0.0.0:4317 }
+processors:
+  memory_limiter: { check_interval: 1s, limit_mib: 400 }
+  batch: { timeout: 5s, send_batch_size: 1024 }
+  # Tail sampling: keep every error and slow trace, 10% of the rest.
+  tail_sampling:
+    decision_wait: 10s
+    policies:
+      - { name: errors, type: status_code, status_code: { status_codes: [ERROR] } }
+      - { name: slow, type: latency, latency: { threshold_ms: 1000 } }
+      - { name: baseline, type: probabilistic, probabilistic: { sampling_percentage: 10 } }
+exporters:
+  jaeger: { endpoint: jaeger:14250, tls: { insecure: true } }
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, tail_sampling, batch]
+      exporters: [jaeger]
