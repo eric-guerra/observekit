@@ -1,0 +1,32 @@
+services:
+  inventory:
+    image: node:18-alpine
+    working_dir: /app
+    volumes: [".:/app"]
+    command: node services/inventory.js
+    environment: { PORT: 8082, OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4318, FAULT_LATENCY_MS: "${FAULT_LATENCY_MS:-0}", FAULT_ERROR_RATE: "${FAULT_ERROR_RATE:-0}" }
+  checkout:
+    image: node:18-alpine
+    working_dir: /app
+    volumes: [".:/app"]
+    command: node services/checkout.js
+    environment: { PORT: 8081, INVENTORY_URL: http://inventory:8082, OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4318 }
+    ports: ["8081:8081"]
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.52.0
+    command: ["--config=/etc/otel/collector.yaml"]
+    volumes: ["./deploy/otel:/etc/otel:ro"]
+  jaeger:
+    image: jaegertracing/all-in-one:1.35
+    ports: ["16686:16686"]
+  prometheus:
+    image: prom/prometheus:v2.36.0
+    volumes: ["./deploy/prometheus:/etc/prometheus:ro"]
+    ports: ["9090:9090"]
+  grafana:
+    image: grafana/grafana:9.0.0
+    environment: { GF_AUTH_ANONYMOUS_ENABLED: "true", GF_AUTH_ANONYMOUS_ORG_ROLE: Admin }
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["3000:3000"]
